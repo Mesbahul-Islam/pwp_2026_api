@@ -5,7 +5,7 @@ class MotionEvent(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     duration = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    threshold = models.FloatField(null=True, blank=True)
+    threshold = models.FloatField(default=0.25)
 
     def __str__(self):
         return f"Motion detected by {self.camera} at {self.timestamp}"
