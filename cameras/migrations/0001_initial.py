@@ -1,0 +1,39 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    initial = True
+
+    dependencies = []
+
+    operations = [
+        migrations.CreateModel(
+            name="Camera",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("address", models.URLField(unique=True)),
+                (
+                    "resolution",
+                    models.CharField(
+                        choices=[
+                            ("1280x720", "720p"),
+                            ("1920x1080", "1080p"),
+                            ("3840x2160", "4k"),
+                        ],
+                        max_length=15,
+                    ),
+                ),
+                ("fps", models.PositiveIntegerField(default=25)),
+                ("motion_sensitivity", models.FloatField(default=0.25)),
+                ("status", models.CharField(default="active", max_length=20)),
+            ],
+        ),
+    ]
