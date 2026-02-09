@@ -1,9 +1,15 @@
 from django.db import models
 
 class MotionEvent(models.Model):
-    camera = models.ForeignKey('cameras.Camera', on_delete=models.CASCADE, related_name='motions_events')
+    camera = models.ForeignKey(
+        "cameras.Camera",
+        on_delete=models.CASCADE,
+        related_name="motions_events",
+        null=False,
+        blank=False,
+    )
     timestamp = models.DateTimeField(auto_now_add=True)
-    duration = models.FloatField(null=True, blank=True)
+    duration = models.FloatField(null=False, blank=False)
     created_at = models.DateTimeField(auto_now_add=True)
     threshold = models.FloatField(default=0.25)
 

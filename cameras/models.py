@@ -11,11 +11,11 @@ class Camera(models.Model):
         (RESOLUTION_1080P, "1080p"),
         (RESOLUTION_4K, "4k"),
     ]
-    address = models.URLField(unique=True)
-    resolution = models.CharField(max_length=15, choices=RESOLUTION_CHOICES)
-    fps = models.PositiveIntegerField(default=25)
+    address = models.URLField(unique=True, null=False, blank=False)
+    resolution = models.CharField(max_length=15, choices=RESOLUTION_CHOICES, null=False, blank=False)
+    fps = models.PositiveIntegerField(default=25, null=False, blank=False)
     # motion_sensitivity = models.FloatField(default=0.25, null=False)
-    status = models.CharField(max_length=20, default="active")
+    status = models.CharField(max_length=20, default="active", null=False)
 
 
     def __str__(self):
