@@ -47,4 +47,5 @@ class CameraImagesList(generics.ListAPIView):
 
     def get_queryset(self):
         camera_id = self.kwargs['pk']
-        return Image.objects.filter(camera_id=camera_id)
+        return Image.objects.filter(motion_event__camera_id=camera_id)
+

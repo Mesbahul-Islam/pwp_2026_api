@@ -106,7 +106,7 @@ The Camera model stores configuration for physical security cameras. Each camera
 The MotionEvent model records when motion is detected by a camera. Each event captures the timestamp, duration of motion, and the sensitivity threshold used. Motion events belong to one camera and act as containers for images and detections.
 
 **Image**
-The Image model stores captured photographs. Each image is linked to both a camera and a motion event. Images contain the file path, file size, and creation timestamp. When motion is detected, one or more images are captured and stored.
+The Image model stores captured photographs. Each image is linked to a motion event, and the camera is accessed through the motion event relationship. Images contain the file path, file size, and creation timestamp. When motion is detected, one or more images are captured and stored.
 
 **Detection**
 The Detection model represents objects identified in images using YOLO with the COCO dataset. Each detection records the object class name (like person, car, dog), confidence score, and creation time. Detections can be associated with either a motion event or a specific image, allowing flexible tracking of what objects were found.
@@ -119,12 +119,11 @@ The Alert model manages notifications triggered by detections. Each alert links 
 The database follows a hierarchical structure:
 
 - Camera to MotionEvent: 1 to N
-- Camera to Image: 1 to N
 - MotionEvent to Camera: N to 1
 - MotionEvent to Image: 1 to N
 - MotionEvent to Detection: 1 to N
-- Image to Camera: N to 1
 - Image to MotionEvent: N to 1
+- Image to Camera: via MotionEvent (no direct FK)
 - Image to Detection: 1 to N
 - Detection to MotionEvent: N to 0..1 (optional)
 - Detection to Image: N to 0..1 (optional)
