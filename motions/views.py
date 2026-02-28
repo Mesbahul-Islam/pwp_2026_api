@@ -1,8 +1,11 @@
+"""Views for the motions app."""
 from rest_framework import generics
-from .models import MotionEvent
-from .serializers import MotionEventSerializer
+
 from images.models import Image
 from images.serializers import ImageSerializer
+
+from .models import MotionEvent
+from .serializers import MotionEventSerializer
 
 
 class MotionEventList(generics.ListCreateAPIView):
@@ -31,5 +34,6 @@ class MotionEventImagesList(generics.ListAPIView):
     serializer_class = ImageSerializer
 
     def get_queryset(self):
+        """Return images filtered by the motion event ID from URL."""
         motion_id = self.kwargs['pk']
         return Image.objects.filter(motion_event_id=motion_id)

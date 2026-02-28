@@ -93,6 +93,63 @@ Access the Django admin interface at `http://127.0.0.1:8000/admin/` to manage da
 
 ---
 
+## Testing
+
+### Running Tests
+
+Run all tests:
+```bash
+python manage.py test
+```
+
+Run tests for a specific app:
+```bash
+python manage.py test cameras
+python manage.py test motions
+python manage.py test images
+```
+
+Run tests with verbose output:
+```bash
+python manage.py test -v 2
+```
+
+### Test Coverage
+
+Install coverage tool:
+```bash
+pipenv install coverage --dev
+```
+
+Run tests with coverage:
+```bash
+coverage run --source='.' manage.py test
+coverage report
+```
+
+Generate HTML coverage report:
+```bash
+coverage html
+```
+
+The coverage report will be available in the `htmlcov/` directory.
+
+---
+
+## Code Quality
+
+### PyLint
+
+Run PyLint to check code quality:
+```bash
+pipenv install pylint pylint-django --dev
+pylint --load-plugins pylint_django --django-settings-module=eyesedge.settings cameras motions images
+```
+
+The project maintains a PyLint score of 9.0 or higher.
+
+---
+
 ## Database Description
 
 The EyesEdge API uses a relational database with five main models that work together to manage security camera monitoring, motion detection, and object recognition.

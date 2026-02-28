@@ -11,6 +11,9 @@ sqlparse = "==0.5.5"
 typing-extensions = "==4.15.0"
 
 [dev-packages]
+coverage = "*"
+pylint = "*"
+pylint-django = "*"
 
 [requires]
 python_version = "3.13"

@@ -1,12 +1,15 @@
+"""
+Views for the cameras app.
+Provides API endpoints for camera management and related resources.
+"""
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import Camera
-from .serializers import CameraSerializer
-from motions.models import MotionEvent
-from motions.serializers import MotionEventSerializer
+
 from images.models import Image
 from images.serializers import ImageSerializer
+from motions.models import MotionEvent
+from motions.serializers import MotionEventSerializer
+from .models import Camera
+from .serializers import CameraSerializer
 
 
 class CameraList(generics.ListCreateAPIView):
@@ -35,6 +38,7 @@ class CameraMotionsList(generics.ListAPIView):
     serializer_class = MotionEventSerializer
 
     def get_queryset(self):
+        """Return motion events filtered by camera ID."""
         camera_id = self.kwargs['pk']
         return MotionEvent.objects.filter(camera_id=camera_id)
 
@@ -46,6 +50,6 @@ class CameraImagesList(generics.ListAPIView):
     serializer_class = ImageSerializer
 
     def get_queryset(self):
+        """Return images filtered by camera ID via motion event."""
         camera_id = self.kwargs['pk']
         return Image.objects.filter(motion_event__camera_id=camera_id)
-
