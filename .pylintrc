@@ -1,0 +1,19 @@
+[MASTER]
+load-plugins=pylint_django
+django-settings-module=eyesedge.settings
+
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    too-few-public-methods,
+    no-member,
+
+[FORMAT]
+max-line-length=100
+
+[DESIGN]
+max-args=10
+max-locals=15
+
+[SIMILARITIES]
+min-similarity-lines=4
