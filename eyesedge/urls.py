@@ -16,6 +16,16 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework import routers
+
+from cameras import views as camera_views
+from motions import views as motion_views
+from images import views as image_views
+
+router = routers.DefaultRouter()
+router.register(r'cameras', camera_views.CameraList, basename='camera')
+router.register(r'motions', motion_views.MotionEventList, basename='motionevent')
+router.register(r'images', image_views.ImageList, basename='image')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

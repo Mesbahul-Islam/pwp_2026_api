@@ -3,7 +3,7 @@ Serializers for the images app.
 Provides serialization for Image model with derived camera field.
 """
 from rest_framework import serializers
-from .models import Image
+from models import Image
 
 
 class ImageSerializer(serializers.ModelSerializer):

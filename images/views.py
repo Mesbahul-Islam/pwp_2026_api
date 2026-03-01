@@ -10,7 +10,7 @@ class ImageList(generics.ListCreateAPIView):
     GET: List all images
     POST: Upload a new image
     """
-    queryset = Image.objects.all()
+    queryset = Image.objects.all().order_by('-created_at')
     serializer_class = ImageSerializer
 
 

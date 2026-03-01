@@ -8,8 +8,8 @@ from images.models import Image
 from images.serializers import ImageSerializer
 from motions.models import MotionEvent
 from motions.serializers import MotionEventSerializer
-from .models import Camera
-from .serializers import CameraSerializer
+from models import Camera
+from serializers import CameraSerializer
 
 
 class CameraList(generics.ListCreateAPIView):
