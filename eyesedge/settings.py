@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'motions',
     'images',
     'detections',
-    'alerts'
+    'alerts',
+    'django_extensions'
 ]
 
 MIDDLEWARE = [

@@ -22,4 +22,5 @@ urlpatterns = [
     path('api/cameras/', include('cameras.urls')),
     path('api/motions/', include('motions.urls')),
     path('api/images/', include('images.urls')),
+    path("api-auth/", include("rest_framework.urls"))
 ]
