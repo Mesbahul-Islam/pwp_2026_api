@@ -87,6 +87,19 @@ The API will be available at `http://127.0.0.1:8000/`
 | PUT | `/api/images/<id>/` | Update image metadata |
 | DELETE | `/api/images/<id>/` | Delete an image |
 
+## Filtering
+
+Endpoints support query-parameter filtering using Django REST Framework + `django-filter`.
+
+Examples:
+
+- `GET /api/cameras/?fps=25`
+- `GET /api/cameras/?status=active&resolution=1920x1080`
+- `GET /api/motions/?camera=1&threshold=0.25`
+- `GET /api/images/?motion_event=12`
+- `GET /api/cameras/1/motions/?duration=2.5`
+- `GET /api/cameras/1/images/?filesize=204800`
+
 ## Admin Interface
 
 Access the Django admin interface at `http://127.0.0.1:8000/admin/` to manage data through a web interface.

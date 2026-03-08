@@ -18,7 +18,7 @@ class MotionEvent(models.Model):
         related_name='motions_events'
     )
     timestamp = models.DateTimeField(auto_now_add=True)
-    duration = models.FloatField(null=False, blank=False)
+    duration = models.FloatField(null=False, blank=False, default=0.0)
     created_at = models.DateTimeField(auto_now_add=True)
     threshold = models.FloatField(default=0.25)
 
