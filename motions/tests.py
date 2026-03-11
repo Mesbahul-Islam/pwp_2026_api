@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -99,6 +100,11 @@ class MotionEventAPITest(APITestCase):
             duration=5.5,
             threshold=0.3
         )
+        self.user = get_user_model().objects.create_user(
+            username="motion_api_user",
+            password="test-pass-123"
+        )
+        self.client.force_authenticate(user=self.user)
         self.list_url = reverse('motion-list')
         self.detail_url = reverse('motion-detail', kwargs={'pk': self.motion_event.pk})
 
@@ -167,3 +173,53 @@ class MotionEventAPITest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+
+class MotionEventAuthenticationAPITest(APITestCase):
+
+    def setUp(self):
+        self.camera = Camera.objects.create(
+            address="http://192.168.1.210:8080/video",
+            resolution="1920x1080",
+            fps=30,
+            status="active"
+        )
+        self.motion_event = MotionEvent.objects.create(
+            camera=self.camera,
+            duration=3.5,
+            threshold=0.4,
+        )
+        self.user = get_user_model().objects.create_user(
+            username="motion_auth_user",
+            password="test-pass-123"
+        )
+        self.list_url = reverse("motion-list")
+        self.detail_url = reverse("motion-detail", kwargs={"pk": self.motion_event.pk})
+        self.images_url = reverse("motion-images", kwargs={"pk": self.motion_event.pk})
+
+    def test_anonymous_motion_endpoints_are_rejected(self):
+        responses = [
+            self.client.get(self.list_url),
+            self.client.get(self.detail_url),
+            self.client.get(self.images_url),
+            self.client.post(
+                self.list_url,
+                {
+                    "camera": self.camera.id,
+                    "duration": 1.1,
+                    "threshold": 0.3,
+                },
+                format="json",
+            ),
+        ]
+
+        for response in responses:
+            self.assertIn(
+                response.status_code,
+                [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+            )
+
+    def test_authenticated_motion_list_is_allowed(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

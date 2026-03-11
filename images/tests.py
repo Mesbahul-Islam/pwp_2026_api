@@ -2,6 +2,8 @@
 Tests for image and API endpoints.
 """
 
+from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -140,6 +142,11 @@ class ImageAPITest(APITestCase):
             filepath="http://example.com/images/capture_001.jpg",
             filesize=102400
         )
+        self.user = get_user_model().objects.create_user(
+            username="image_api_user",
+            password="test-pass-123"
+        )
+        self.client.force_authenticate(user=self.user)
         self.list_url = reverse('image-list')
         self.detail_url = reverse('image-detail', kwargs={'pk': self.image.pk})
 
@@ -219,3 +226,57 @@ class ImageAPITest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+
+
+class ImageAuthenticationAPITest(APITestCase):
+
+    def setUp(self):
+        cache.clear()
+        self.camera = Camera.objects.create(
+            address="http://192.168.1.220:8080/video",
+            resolution="1920x1080",
+            fps=30,
+            status="active"
+        )
+        self.motion_event = MotionEvent.objects.create(
+            camera=self.camera,
+            duration=2.2,
+            threshold=0.3,
+        )
+        self.image = Image.objects.create(
+            motion_event=self.motion_event,
+            filepath="http://example.com/images/auth_test.jpg",
+            filesize=1000,
+        )
+        self.user = get_user_model().objects.create_user(
+            username="image_auth_user",
+            password="test-pass-123"
+        )
+        self.list_url = reverse("image-list")
+        self.detail_url = reverse("image-detail", kwargs={"pk": self.image.pk})
+
+    def test_anonymous_image_endpoints_are_rejected(self):
+        responses = [
+            self.client.get(self.list_url),
+            self.client.get(self.detail_url),
+            self.client.post(
+                self.list_url,
+                {
+                    "motion_event": self.motion_event.id,
+                    "filepath": "http://example.com/images/auth_post.jpg",
+                    "filesize": 2000,
+                },
+                format="json",
+            ),
+        ]
+
+        for response in responses:
+            self.assertIn(
+                response.status_code,
+                [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+            )
+
+    def test_authenticated_image_list_is_allowed(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

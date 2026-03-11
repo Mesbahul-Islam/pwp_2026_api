@@ -3,6 +3,7 @@ Views for the cameras app.
 Provides API endpoints for camera management and related resources.
 """
 from rest_framework import generics
+from rest_framework import permissions
 from django_filters.rest_framework import DjangoFilterBackend
 
 from images.models import Image
@@ -20,6 +21,7 @@ class CameraList(generics.ListCreateAPIView):
     """
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["address", "resolution", "fps", "status"]
 
@@ -32,6 +34,7 @@ class CameraDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class CameraMotionsList(generics.ListAPIView):
@@ -39,6 +42,7 @@ class CameraMotionsList(generics.ListAPIView):
     GET: List all motion events for a specific camera
     """
     serializer_class = MotionEventSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["duration", "threshold", "timestamp"]
 
@@ -53,6 +57,7 @@ class CameraImagesList(generics.ListAPIView):
     GET: List all images for a specific camera
     """
     serializer_class = ImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["filepath", "filesize", "motion_event"]
 

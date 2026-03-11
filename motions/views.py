@@ -1,5 +1,6 @@
 """Views for the motions app."""
 from rest_framework import generics
+from rest_framework import permissions
 from django_filters.rest_framework import DjangoFilterBackend
 
 from images.models import Image
@@ -16,6 +17,7 @@ class MotionEventList(generics.ListCreateAPIView):
     """
     queryset = MotionEvent.objects.all()
     serializer_class = MotionEventSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "camera", "duration", "threshold", "timestamp", "created_at"]
 
@@ -28,6 +30,7 @@ class MotionEventDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = MotionEvent.objects.all()
     serializer_class = MotionEventSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 
 class MotionEventImagesList(generics.ListAPIView):
@@ -35,6 +38,7 @@ class MotionEventImagesList(generics.ListAPIView):
     GET: List all images for a specific motion event
     """
     serializer_class = ImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["id", "filepath", "filesize", "created_at", "motion_event"]
 

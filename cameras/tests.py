@@ -2,6 +2,7 @@
 Tests for camera model and related API endpoints.
 """
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
@@ -111,6 +112,11 @@ class CameraAPITest(APITestCase):
             fps=30,
             status="active"
         )
+        self.user = get_user_model().objects.create_user(
+            username="camera_api_user",
+            password="test-pass-123"
+        )
+        self.client.force_authenticate(user=self.user)
         self.list_url = reverse('camera-list')
         self.detail_url = reverse('camera-detail', kwargs={'pk': self.camera.pk})
 
@@ -185,3 +191,51 @@ class CameraAPITest(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
+
+
+class CameraAuthenticationAPITest(APITestCase):
+
+    def setUp(self):
+        self.camera = Camera.objects.create(
+            address="http://192.168.1.201:8080/video",
+            resolution="1920x1080",
+            fps=30,
+            status="active"
+        )
+        self.user = get_user_model().objects.create_user(
+            username="camera_auth_user",
+            password="test-pass-123"
+        )
+        self.list_url = reverse("camera-list")
+        self.detail_url = reverse("camera-detail", kwargs={"pk": self.camera.pk})
+        self.motions_url = reverse("camera-motions", kwargs={"pk": self.camera.pk})
+        self.images_url = reverse("camera-images", kwargs={"pk": self.camera.pk})
+
+    def test_anonymous_camera_endpoints_are_rejected(self):
+        responses = [
+            self.client.get(self.list_url),
+            self.client.get(self.detail_url),
+            self.client.get(self.motions_url),
+            self.client.get(self.images_url),
+            self.client.post(
+                self.list_url,
+                {
+                    "address": "http://192.168.1.202:8080/video",
+                    "resolution": "1280x720",
+                    "fps": 25,
+                    "status": "active",
+                },
+                format="json",
+            ),
+        ]
+
+        for response in responses:
+            self.assertIn(
+                response.status_code,
+                [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN],
+            )
+
+    def test_authenticated_camera_list_is_allowed(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
