@@ -8,7 +8,8 @@ from eyesedge.schema_validation import validate_payload_with_schema
 
 
 class MotionEventSerializer(serializers.ModelSerializer):
-    """Serializer for MotionEvent model with timestamp as read-only."""
+    """Serializer for MotionEvent model with timestamp as read-only.
+    Code borrowed from https://github.com/UniOulu-Ubicomp-Programming-Courses/pwp-sensorhub-example/blob/ex2-05-validation/app.py"""
 
     @staticmethod
     def _json_schema(partial=False):

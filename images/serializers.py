@@ -13,6 +13,7 @@ class ImageSerializer(serializers.ModelSerializer):
     
     Camera is derived from the motion event relationship
     and included as a read-only field.
+    Code borrowed from https://github.com/UniOulu-Ubicomp-Programming-Courses/pwp-sensorhub-example/blob/ex2-05-validation/app.py
     """
     camera = serializers.SerializerMethodField()
 
