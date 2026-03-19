@@ -104,6 +104,16 @@ Examples:
 
 Access the Django admin interface at `http://127.0.0.1:8000/admin/` to manage data through a web interface.
 
+To test the admin interface, create a superuser account:
+```bash
+python manage.py createsuperuser
+```
+
+Then log in with the created credentials to view and manage cameras, motion events, and images.
+
+For now, use the following credentials for testing:
+- Username: `test`
+- Password: `test12345`
 ---
 
 ## Testing
@@ -156,7 +166,7 @@ The coverage report will be available in the `htmlcov/` directory.
 Run PyLint to check code quality:
 ```bash
 pipenv install pylint pylint-django --dev
-pylint --load-plugins pylint_django --django-settings-module=eyesedge.settings cameras motions images
+pylint -v cameras motions images
 ```
 
 The project maintains a PyLint score of 9.0 or higher.

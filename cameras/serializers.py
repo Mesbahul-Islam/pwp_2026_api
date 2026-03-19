@@ -2,6 +2,7 @@
 Serializers for the cameras app.
 Provides serialization for Camera model.
 """
+
 from rest_framework import serializers
 from .models import Camera
 from eyesedge.schema_validation import validate_payload_with_schema
@@ -9,7 +10,11 @@ from eyesedge.schema_validation import validate_payload_with_schema
 
 class CameraSerializer(serializers.ModelSerializer):
     """Serializer for Camera model with all configuration fields.
-    Code borrowed from https://github.com/UniOulu-Ubicomp-Programming-Courses/pwp-sensorhub-example/blob/ex2-05-validation/app.py"""
+
+    Code borrowed from:
+    https://github.com/UniOulu-Ubicomp-Programming-Courses/
+    pwp-sensorhub-example/blob/ex2-05-validation/app.py
+    """
 
     @staticmethod
     def _json_schema(partial=False):

@@ -1,3 +1,5 @@
+"""URL routes for image API endpoints."""
+
 from django.urls import path
 from . import views
 

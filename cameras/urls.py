@@ -1,3 +1,5 @@
+"""URL routes for camera API endpoints."""
+
 from django.urls import path
 from . import views
 

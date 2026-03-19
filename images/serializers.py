@@ -2,9 +2,10 @@
 Serializers for the images app.
 Provides serialization for Image model with derived camera field.
 """
+
 from rest_framework import serializers
-from .models import Image
 from eyesedge.schema_validation import validate_payload_with_schema
+from .models import Image
 
 
 class ImageSerializer(serializers.ModelSerializer):
@@ -13,7 +14,9 @@ class ImageSerializer(serializers.ModelSerializer):
     
     Camera is derived from the motion event relationship
     and included as a read-only field.
-    Code borrowed from https://github.com/UniOulu-Ubicomp-Programming-Courses/pwp-sensorhub-example/blob/ex2-05-validation/app.py
+    Code borrowed from:
+    https://github.com/UniOulu-Ubicomp-Programming-Courses/
+    pwp-sensorhub-example/blob/ex2-05-validation/app.py
     """
     camera = serializers.SerializerMethodField()
 
