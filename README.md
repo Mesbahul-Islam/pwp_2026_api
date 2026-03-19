@@ -15,9 +15,13 @@ This is the REST API component of the EyesEdge security camera system. Built wit
 
 - Python 3.13 or higher
 - pip
-- Pipenv (recommended)
+- Pipenv (optional)
 
 ### Installation Steps
+
+Choose one of the following environment setup options.
+
+#### Option A: Pipenv
 
 1. Navigate to the api directory:
 ```bash
@@ -46,6 +50,51 @@ python manage.py createsuperuser
 ```
 
 6. Run the development server:
+```bash
+python manage.py runserver
+```
+
+#### Option B: venv
+
+1. Navigate to the api directory:
+```bash
+cd api
+```
+
+2. Create a virtual environment:
+```bash
+python3 -m venv .venv
+```
+
+3. Activate the virtual environment:
+
+On Linux/macOS:
+```bash
+source .venv/bin/activate
+```
+
+On Windows (PowerShell):
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+4. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+5. Apply database migrations:
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+6. Create a superuser (optional, for admin access):
+```bash
+python manage.py createsuperuser
+```
+
+7. Run the development server:
 ```bash
 python manage.py runserver
 ```
@@ -169,7 +218,9 @@ pipenv install pylint pylint-django --dev
 pylint -v cameras motions images
 ```
 
-The project maintains a PyLint score of 9.0 or higher.
+For pylint configuration, see the `.pylintrc` file in the project root. 
+
+#### Current Pylint Score - 9.84/10
 
 ---
 
