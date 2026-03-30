@@ -101,7 +101,46 @@ python manage.py runserver
 
 The API will be available at `http://127.0.0.1:8000/`
 
+## Authentication
+
+All API endpoints are protected with DRF Token Authentication.
+
+### 1. Create a user (or superuser)
+
+```bash
+python manage.py createsuperuser
+```
+
+### 2. Generate a token for that user
+
+```bash
+python manage.py drf_create_token <username>
+```
+
+To reset and recreate a token:
+
+```bash
+python manage.py drf_create_token -r <username>
+```
+
+### 3. Send the token in requests
+
+Use the `Authorization` header format below for all API requests:
+
+```http
+Authorization: Token <your_token>
+```
+
+Example:
+
+```bash
+curl -X GET http://127.0.0.1:8000/api/cameras/ \
+	-H 'Authorization: Token <your_token>'
+```
+
 ## API Endpoints
+
+Note: Every endpoint listed below requires a valid authentication token.
 
 ### Cameras
 
@@ -159,10 +198,6 @@ python manage.py createsuperuser
 ```
 
 Then log in with the created credentials to view and manage cameras, motion events, and images.
-
-For now, use the following credentials for testing:
-- Username: `test`
-- Password: `test12345`
 ---
 
 ## Testing

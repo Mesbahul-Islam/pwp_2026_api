@@ -1,9 +1,9 @@
-asgiref==3.11.1
+asgiref
 Django
-djangorestframework==3.16.1
+djangorestframework
 django-filter
-sqlparse==0.5.5
-typing_extensions==4.15.0
+sqlparse
+typing_extensions
 django-extensions
 jsonschema
 coverage
