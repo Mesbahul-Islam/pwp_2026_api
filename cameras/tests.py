@@ -9,6 +9,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from .models import Camera
 from .serializers import CameraSerializer
+from motions.models import MotionEvent
 
 
 class CameraModelTest(TestCase):
@@ -192,6 +193,45 @@ class CameraAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
+    def test_create_motion_event_for_camera(self):
+        url = reverse('camera-motions', kwargs={'pk': self.camera.pk})
+        count_before = MotionEvent.objects.count()
+
+        response = self.client.post(
+            url,
+            {
+                "duration": 2.4,
+                "threshold": 0.35,
+            },
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(MotionEvent.objects.count(), count_before + 1)
+        self.assertEqual(response.data['camera'], self.camera.pk)
+
+    def test_create_motion_event_for_camera_ignores_payload_camera(self):
+        camera2 = Camera.objects.create(
+            address="http://192.168.1.111:8080/video",
+            resolution="1280x720",
+            fps=25,
+            status="active",
+        )
+        url = reverse('camera-motions', kwargs={'pk': self.camera.pk})
+
+        response = self.client.post(
+            url,
+            {
+                "camera": camera2.pk,
+                "duration": 1.1,
+                "threshold": 0.2,
+            },
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['camera'], self.camera.pk)
+
 
 class CameraAuthenticationAPITest(APITestCase):
 
@@ -217,6 +257,14 @@ class CameraAuthenticationAPITest(APITestCase):
             self.client.get(self.detail_url),
             self.client.get(self.motions_url),
             self.client.get(self.images_url),
+            self.client.post(
+                self.motions_url,
+                {
+                    "duration": 1.0,
+                    "threshold": 0.3,
+                },
+                format="json",
+            ),
             self.client.post(
                 self.list_url,
                 {

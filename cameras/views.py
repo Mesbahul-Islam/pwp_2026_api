@@ -3,7 +3,9 @@ Views for the cameras app.
 Provides API endpoints for camera management and related resources.
 """
 from rest_framework import generics
+from rest_framework import status
 from rest_framework import permissions
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from images.models import Image
@@ -37,9 +39,10 @@ class CameraDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class CameraMotionsList(generics.ListAPIView):
+class CameraMotionsList(generics.ListCreateAPIView):
     """
     GET: List all motion events for a specific camera
+    POST: Create a motion event for a specific camera
     """
     serializer_class = MotionEventSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -50,6 +53,18 @@ class CameraMotionsList(generics.ListAPIView):
         """Return motion events filtered by camera ID."""
         camera_id = self.kwargs['pk']
         return MotionEvent.objects.filter(camera_id=camera_id)
+
+    def create(self, request, *args, **kwargs):
+        """Create a motion event and force camera from URL path."""
+        payload = request.data.copy()
+        payload["camera"] = self.kwargs["pk"]
+
+        serializer = self.get_serializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class CameraImagesList(generics.ListAPIView):

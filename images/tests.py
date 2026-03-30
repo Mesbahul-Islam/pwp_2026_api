@@ -227,6 +227,44 @@ class ImageAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
+    def test_create_image_via_motion_nested_route(self):
+        url = reverse('motion-images', kwargs={'pk': self.motion_event.pk})
+        count_before = Image.objects.count()
+
+        response = self.client.post(
+            url,
+            {
+                "filepath": "http://example.com/images/capture_nested.jpg",
+                "filesize": 3000,
+            },
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Image.objects.count(), count_before + 1)
+        self.assertEqual(response.data['motion_event'], self.motion_event.pk)
+
+    def test_create_image_via_motion_nested_route_ignores_payload_motion_event(self):
+        motion2 = MotionEvent.objects.create(
+            camera=self.camera,
+            duration=3.3,
+            threshold=0.4,
+        )
+        url = reverse('motion-images', kwargs={'pk': self.motion_event.pk})
+
+        response = self.client.post(
+            url,
+            {
+                "motion_event": motion2.pk,
+                "filepath": "http://example.com/images/capture_nested_override.jpg",
+                "filesize": 3333,
+            },
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['motion_event'], self.motion_event.pk)
+
 
 class ImageAuthenticationAPITest(APITestCase):
 
@@ -264,6 +302,14 @@ class ImageAuthenticationAPITest(APITestCase):
                 {
                     "motion_event": self.motion_event.id,
                     "filepath": "http://example.com/images/auth_post.jpg",
+                    "filesize": 2000,
+                },
+                format="json",
+            ),
+            self.client.post(
+                reverse("motion-images", kwargs={"pk": self.motion_event.pk}),
+                {
+                    "filepath": "http://example.com/images/auth_nested.jpg",
                     "filesize": 2000,
                 },
                 format="json",

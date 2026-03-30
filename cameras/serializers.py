@@ -53,8 +53,7 @@ class CameraSerializer(serializers.ModelSerializer):
         return schema
 
     def validate(self, attrs):
-        payload = self.initial_data if isinstance(self.initial_data, dict) else attrs
-        validate_payload_with_schema(payload, self._json_schema(partial=self.partial))
+        validate_payload_with_schema(attrs, self._json_schema(partial=self.partial))
         return super().validate(attrs)
 
     class Meta:

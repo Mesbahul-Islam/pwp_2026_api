@@ -53,7 +53,11 @@ class ImageSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'camera']
 
     def validate(self, attrs):
-        payload = self.initial_data if isinstance(self.initial_data, dict) else attrs
+        payload = dict(attrs)
+        motion_event = payload.get("motion_event")
+        if hasattr(motion_event, "pk"):
+            payload["motion_event"] = motion_event.pk
+
         validate_payload_with_schema(payload, self._json_schema(partial=self.partial))
         return super().validate(attrs)
 

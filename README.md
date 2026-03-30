@@ -111,21 +111,25 @@ All API endpoints are protected with DRF Token Authentication.
 python manage.py createsuperuser
 ```
 
-### 2. Generate a token for that user
+### 2. Get a token using the authentication endpoint
+
+Request a token with username and password:
 
 ```bash
-python manage.py drf_create_token <username>
+curl -X POST http://127.0.0.1:8000/api/token/ \
+	-H 'Content-Type: application/json' \
+	-d '{"username":"<username>","password":"<password>"}'
 ```
 
-To reset and recreate a token:
+Example response:
 
-```bash
-python manage.py drf_create_token -r <username>
+```json
+{"token":"<your_token>"}
 ```
 
 ### 3. Send the token in requests
 
-Use the `Authorization` header format below for all API requests:
+Use the `Authorization` header format below for all protected API requests:
 
 ```http
 Authorization: Token <your_token>
@@ -136,6 +140,20 @@ Example:
 ```bash
 curl -X GET http://127.0.0.1:8000/api/cameras/ \
 	-H 'Authorization: Token <your_token>'
+```
+
+### Optional: generate a token from CLI
+
+You can also generate a token directly from the command line:
+
+```bash
+python manage.py drf_create_token <username>
+```
+
+To reset and recreate a token:
+
+```bash
+python manage.py drf_create_token -r <username>
 ```
 
 ## API Endpoints
@@ -152,6 +170,7 @@ Note: Every endpoint listed below requires a valid authentication token.
 | PUT | `/api/cameras/<id>/` | Update a camera |
 | DELETE | `/api/cameras/<id>/` | Delete a camera |
 | GET | `/api/cameras/<id>/motions/` | List all motion events for a camera |
+| POST | `/api/cameras/<id>/motions/` | Create a motion event for a camera |
 | GET | `/api/cameras/<id>/images/` | List all images for a camera |
 
 ### Motion Events
@@ -164,6 +183,7 @@ Note: Every endpoint listed below requires a valid authentication token.
 | PUT | `/api/motions/<id>/` | Update a motion event |
 | DELETE | `/api/motions/<id>/` | Delete a motion event |
 | GET | `/api/motions/<id>/images/` | List all images for a motion event |
+| POST | `/api/motions/<id>/images/` | Create an image for a motion event |
 
 ### Images
 

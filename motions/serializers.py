@@ -43,7 +43,11 @@ class MotionEventSerializer(serializers.ModelSerializer):
         return schema
 
     def validate(self, attrs):
-        payload = self.initial_data if isinstance(self.initial_data, dict) else attrs
+        payload = dict(attrs)
+        camera = payload.get("camera")
+        if hasattr(camera, "pk"):
+            payload["camera"] = camera.pk
+
         validate_payload_with_schema(payload, self._json_schema(partial=self.partial))
         return super().validate(attrs)
 

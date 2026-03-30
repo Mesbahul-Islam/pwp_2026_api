@@ -1,6 +1,8 @@
 """Views for the motions app."""
 from rest_framework import generics
+from rest_framework import status
 from rest_framework import permissions
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from images.models import Image
@@ -33,9 +35,10 @@ class MotionEventDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class MotionEventImagesList(generics.ListAPIView):
+class MotionEventImagesList(generics.ListCreateAPIView):
     """
     GET: List all images for a specific motion event
+    POST: Create a new image for a specific motion event
     """
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -46,3 +49,15 @@ class MotionEventImagesList(generics.ListAPIView):
         """Return images filtered by the motion event ID from URL."""
         motion_id = self.kwargs['pk']
         return Image.objects.filter(motion_event_id=motion_id)
+
+    def create(self, request, *args, **kwargs):
+        """Create an image and force motion event from URL path."""
+        payload = request.data.copy()
+        payload["motion_event"] = self.kwargs["pk"]
+
+        serializer = self.get_serializer(data=payload)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
