@@ -15,6 +15,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+#Borrowed from AI. Prompt - "How do I set the BASE_DIR properly for env files to be recognized properly"
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
