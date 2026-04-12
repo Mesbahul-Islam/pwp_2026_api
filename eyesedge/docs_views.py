@@ -9,7 +9,7 @@ from django.shortcuts import render
 
 def openapi_yaml(request):
     """Serve the root-level openapi.yaml file."""
-    spec_path = settings.BASE_DIR.parent / "openapi.yaml"
+    spec_path = settings.BASE_DIR / "openapi.yaml"
 
     if not spec_path.exists():
         raise Http404("openapi.yaml not found")
