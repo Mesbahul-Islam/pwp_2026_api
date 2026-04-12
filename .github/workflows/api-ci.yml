@@ -89,11 +89,24 @@ jobs:
           set -euo pipefail
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
+          if [ -z "${VM_HOST:-}" ]; then
+            echo "VM_HOST secret is empty. Set VM_HOST in the deployment environment secrets."
+            exit 1
+          fi
           if [ -n "$VM_KNOWN_HOSTS" ]; then
-            echo "$VM_KNOWN_HOSTS" > ~/.ssh/known_hosts
+            printf '%s\n' "$VM_KNOWN_HOSTS" > ~/.ssh/known_hosts
           else
             PORT="${VM_PORT:-22}"
-            ssh-keyscan -p "$PORT" "$VM_HOST" >> ~/.ssh/known_hosts
+            if ! ssh-keyscan -H -T 15 -p "$PORT" "$VM_HOST" > ~/.ssh/known_hosts; then
+              echo "ssh-keyscan failed for ${VM_HOST}:${PORT}."
+              echo "Set VM_KNOWN_HOSTS secret explicitly, or verify VM_HOST/VM_PORT and network access from GitHub runners."
+              exit 1
+            fi
+            if [ ! -s ~/.ssh/known_hosts ]; then
+              echo "ssh-keyscan returned no host keys for ${VM_HOST}:${PORT}."
+              echo "Set VM_KNOWN_HOSTS secret explicitly with ssh-keyscan output."
+              exit 1
+            fi
           fi
           chmod 644 ~/.ssh/known_hosts
 
