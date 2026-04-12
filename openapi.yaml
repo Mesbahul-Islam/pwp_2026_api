@@ -9,7 +9,6 @@ info:
 
 servers:
   - url: /api
-    description: Base URL prefix configured in the Django router.
 
 tags:
   - name: auth
