@@ -45,6 +45,7 @@ jobs:
   deploy:
     name: Deploy to cPouta VM
     runs-on: ubuntu-latest
+    environment: deployment
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/deployment'
 
