@@ -49,9 +49,6 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/deployment'
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -74,23 +71,18 @@ jobs:
           fi
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Sync code to VM
+      - name: Pull latest deployment branch on VM
         env:
           VM_HOST: ${{ secrets.VM_HOST }}
           VM_USER: ${{ secrets.VM_USER }}
           VM_PORT: ${{ secrets.VM_PORT }}
           VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH }}
+          VM_GIT_BRANCH: ${{ secrets.VM_GIT_BRANCH }}
         run: |
           set -euo pipefail
           PORT="${VM_PORT:-22}"
-          rsync -az --delete \
-            -e "ssh -p ${PORT}" \
-            --exclude ".git/" \
-            --exclude ".github/" \
-            --exclude ".venv/" \
-            --exclude "__pycache__/" \
-            --exclude "*.pyc" \
-            ./ "${VM_USER}@${VM_HOST}:${VM_DEPLOY_PATH}/"
+          BRANCH="${VM_GIT_BRANCH:-deployment}"
+          ssh -p "$PORT" "${VM_USER}@${VM_HOST}" "set -euo pipefail; cd '${VM_DEPLOY_PATH}'; test -d .git; git fetch origin '${BRANCH}'; git checkout '${BRANCH}'; git pull --ff-only origin '${BRANCH}'"
 
       - name: Rebuild and restart Docker container
         env:
