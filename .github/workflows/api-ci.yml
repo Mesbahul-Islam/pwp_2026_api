@@ -53,17 +53,32 @@ jobs:
       - name: Prepare SSH private key
         env:
           VM_SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          VM_SSH_PRIVATE_KEY_B64: ${{ secrets.VM_SSH_PRIVATE_KEY_B64 }}
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          KEY_CONTENT="${VM_SSH_PRIVATE_KEY}"
-          if printf '%s' "$KEY_CONTENT" | grep -q '\\n'; then
-            KEY_CONTENT="$(printf '%s' "$KEY_CONTENT" | sed 's/\\n/\n/g')"
+          if [ -n "${VM_SSH_PRIVATE_KEY_B64:-}" ]; then
+            printf '%s' "$VM_SSH_PRIVATE_KEY_B64" | base64 -d | tr -d '\r' > ~/.ssh/id_vm_deploy
+          elif [ -n "${VM_SSH_PRIVATE_KEY:-}" ]; then
+            KEY_CONTENT="${VM_SSH_PRIVATE_KEY}"
+            if printf '%s' "$KEY_CONTENT" | grep -q '\\n'; then
+              KEY_CONTENT="$(printf '%s' "$KEY_CONTENT" | sed 's/\\n/\n/g')"
+            fi
+            printf '%s\n' "$KEY_CONTENT" | tr -d '\r' > ~/.ssh/id_vm_deploy
+          else
+            echo "Missing SSH key secret. Set VM_SSH_PRIVATE_KEY_B64 (recommended) or VM_SSH_PRIVATE_KEY."
+            exit 1
           fi
-          printf '%s\n' "$KEY_CONTENT" | tr -d '\r' > ~/.ssh/id_vm_deploy
           chmod 600 ~/.ssh/id_vm_deploy
-          ssh-keygen -y -f ~/.ssh/id_vm_deploy >/dev/null
+          if ! grep -Eq "BEGIN (OPENSSH|RSA|EC|DSA|PRIVATE) PRIVATE KEY" ~/.ssh/id_vm_deploy; then
+            echo "SSH private key format is invalid. Use an OpenSSH private key."
+            exit 1
+          fi
+          if ! ssh-keygen -y -f ~/.ssh/id_vm_deploy >/dev/null 2>&1; then
+            echo "Unable to parse SSH key. Re-save the key in GitHub secrets, or use VM_SSH_PRIVATE_KEY_B64."
+            exit 1
+          fi
 
       - name: Configure SSH known_hosts
         env:
