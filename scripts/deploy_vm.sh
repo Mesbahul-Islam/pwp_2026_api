@@ -14,10 +14,13 @@ BUILD_CONTEXT="${VM_DOCKER_BUILD_CONTEXT:-.}"
 RUN_ARGS="${VM_DOCKER_RUN_ARGS:--d --restart unless-stopped -p 8000:8000}"
 DOCKERFILE="${VM_DOCKERFILE:-}"
 
-if [[ ! -d .git ]]; then
-  echo "Current directory is not a git repository."
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Current directory is not inside a git repository."
   exit 1
 fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 
 if [[ "$SKIP_PULL" != "true" ]]; then
   git fetch origin "$BRANCH"
