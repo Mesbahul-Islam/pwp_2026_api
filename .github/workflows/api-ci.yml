@@ -80,6 +80,33 @@ jobs:
             exit 1
           fi
 
+      - name: Preflight VM connectivity
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${VM_PORT:-22}"
+          if [ -z "${VM_HOST:-}" ]; then
+            echo "VM_HOST secret is empty. Set VM_HOST in the deployment environment secrets."
+            exit 1
+          fi
+          echo "Testing TCP connectivity to ${VM_HOST}:${PORT} from GitHub runner..."
+          if command -v nc >/dev/null 2>&1; then
+            if ! nc -vz -w 8 "$VM_HOST" "$PORT"; then
+              echo "Cannot reach ${VM_HOST}:${PORT} from this runner."
+              echo "Check floating IP, security groups, and external SSH access for GitHub-hosted runners."
+              exit 1
+            fi
+          else
+            if ! timeout 8 bash -c "cat < /dev/null > /dev/tcp/${VM_HOST}/${PORT}"; then
+              echo "Cannot reach ${VM_HOST}:${PORT} from this runner."
+              echo "Check floating IP, security groups, and external SSH access for GitHub-hosted runners."
+              exit 1
+            fi
+          fi
+          echo "Connectivity preflight passed."
+
       - name: Configure SSH known_hosts
         env:
           VM_HOST: ${{ secrets.VM_HOST }}
