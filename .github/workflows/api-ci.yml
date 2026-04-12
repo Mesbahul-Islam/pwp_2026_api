@@ -50,10 +50,20 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/deployment'
 
     steps:
-      - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+      - name: Prepare SSH private key
+        env:
+          VM_SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          KEY_CONTENT="${VM_SSH_PRIVATE_KEY}"
+          if printf '%s' "$KEY_CONTENT" | grep -q '\\n'; then
+            KEY_CONTENT="$(printf '%s' "$KEY_CONTENT" | sed 's/\\n/\n/g')"
+          fi
+          printf '%s\n' "$KEY_CONTENT" | tr -d '\r' > ~/.ssh/id_vm_deploy
+          chmod 600 ~/.ssh/id_vm_deploy
+          ssh-keygen -y -f ~/.ssh/id_vm_deploy >/dev/null
 
       - name: Configure SSH known_hosts
         env:
@@ -83,7 +93,7 @@ jobs:
           set -euo pipefail
           PORT="${VM_PORT:-22}"
           BRANCH="${VM_GIT_BRANCH:-deployment}"
-          ssh -p "$PORT" "${VM_USER}@${VM_HOST}" "set -euo pipefail; cd '${VM_DEPLOY_PATH}'; test -d .git; git fetch origin '${BRANCH}'; git checkout '${BRANCH}'; git pull --ff-only origin '${BRANCH}'"
+          ssh -i ~/.ssh/id_vm_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p "$PORT" "${VM_USER}@${VM_HOST}" "set -euo pipefail; cd '${VM_DEPLOY_PATH}'; test -d .git; git fetch origin '${BRANCH}'; git checkout '${BRANCH}'; git pull --ff-only origin '${BRANCH}'"
 
       - name: Rebuild and restart Docker container
         env:
@@ -107,4 +117,4 @@ jobs:
           if [ -n "${VM_DOCKERFILE:-}" ]; then
             DOCKERFILE_ARG="-f ${VM_DOCKERFILE}"
           fi
-          ssh -p "$PORT" "${VM_USER}@${VM_HOST}" "set -euo pipefail; cd '${VM_DEPLOY_PATH}'; docker build ${DOCKERFILE_ARG} -t '${IMAGE}' '${BUILD_CONTEXT}'; docker rm -f '${CONTAINER}' 2>/dev/null || true; docker run --name '${CONTAINER}' ${RUN_ARGS} '${IMAGE}'"
+          ssh -i ~/.ssh/id_vm_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p "$PORT" "${VM_USER}@${VM_HOST}" "set -euo pipefail; cd '${VM_DEPLOY_PATH}'; docker build ${DOCKERFILE_ARG} -t '${IMAGE}' '${BUILD_CONTEXT}'; docker rm -f '${CONTAINER}' 2>/dev/null || true; docker run --name '${CONTAINER}' ${RUN_ARGS} '${IMAGE}'"
