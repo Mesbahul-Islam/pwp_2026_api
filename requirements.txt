@@ -2,6 +2,7 @@ asgiref
 Django
 djangorestframework
 django-filter
+gunicorn
 sqlparse
 typing_extensions
 django-extensions
