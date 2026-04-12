@@ -12,6 +12,7 @@ gunicorn = "*"
 jsonschema = "*"
 sqlparse = "==0.5.5"
 typing-extensions = "==4.15.0"
+python-dotenv = "*"
 
 [dev-packages]
 coverage = "*"

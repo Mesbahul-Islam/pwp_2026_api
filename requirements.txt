@@ -8,3 +8,4 @@ typing_extensions
 django-extensions
 jsonschema
 coverage
+python-dotenv
