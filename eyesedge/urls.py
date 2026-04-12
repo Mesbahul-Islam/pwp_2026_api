@@ -17,10 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
+from .docs_views import openapi_yaml, swagger_ui
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/token/', obtain_auth_token, name='api-token-auth'),
+    path('api/schema/', openapi_yaml, name='openapi-yaml'),
+    path('api/docs/', swagger_ui, name='swagger-ui'),
     path('api/cameras/', include('cameras.urls')),
     path('api/motions/', include('motions.urls')),
     path('api/images/', include('images.urls')),
