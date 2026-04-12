@@ -1,0 +1,117 @@
+name: API CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - deployment
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Apply migrations
+        run: python manage.py migrate --noinput
+
+      - name: Run Django checks
+        run: python manage.py check
+
+      - name: Run test suite
+        run: python manage.py test --verbosity 2
+
+  deploy:
+    name: Deploy to cPouta VM
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/deployment'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+
+      - name: Configure SSH known_hosts
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+          VM_KNOWN_HOSTS: ${{ secrets.VM_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          if [ -n "$VM_KNOWN_HOSTS" ]; then
+            echo "$VM_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          else
+            PORT="${VM_PORT:-22}"
+            ssh-keyscan -p "$PORT" "$VM_HOST" >> ~/.ssh/known_hosts
+          fi
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Sync code to VM
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+          VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          PORT="${VM_PORT:-22}"
+          rsync -az --delete \
+            -e "ssh -p ${PORT}" \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude ".venv/" \
+            --exclude "__pycache__/" \
+            --exclude "*.pyc" \
+            ./ "${VM_USER}@${VM_HOST}:${VM_DEPLOY_PATH}/"
+
+      - name: Rebuild and restart Docker container
+        env:
+          VM_HOST: ${{ secrets.VM_HOST }}
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_PORT: ${{ secrets.VM_PORT }}
+          VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH }}
+          VM_DOCKER_IMAGE: ${{ secrets.VM_DOCKER_IMAGE }}
+          VM_CONTAINER_NAME: ${{ secrets.VM_CONTAINER_NAME }}
+          VM_DOCKER_RUN_ARGS: ${{ secrets.VM_DOCKER_RUN_ARGS }}
+          VM_DOCKER_BUILD_CONTEXT: ${{ secrets.VM_DOCKER_BUILD_CONTEXT }}
+          VM_DOCKERFILE: ${{ secrets.VM_DOCKERFILE }}
+        run: |
+          set -euo pipefail
+          PORT="${VM_PORT:-22}"
+          IMAGE="${VM_DOCKER_IMAGE:-eyesedge-api:latest}"
+          CONTAINER="${VM_CONTAINER_NAME:-eyesedge-api}"
+          BUILD_CONTEXT="${VM_DOCKER_BUILD_CONTEXT:-.}"
+          RUN_ARGS="${VM_DOCKER_RUN_ARGS:--d --restart unless-stopped -p 8000:8000}"
+          DOCKERFILE_ARG=""
+          if [ -n "${VM_DOCKERFILE:-}" ]; then
+            DOCKERFILE_ARG="-f ${VM_DOCKERFILE}"
+          fi
+          ssh -p "$PORT" "${VM_USER}@${VM_HOST}" "set -euo pipefail; cd '${VM_DEPLOY_PATH}'; docker build ${DOCKERFILE_ARG} -t '${IMAGE}' '${BUILD_CONTEXT}'; docker rm -f '${CONTAINER}' 2>/dev/null || true; docker run --name '${CONTAINER}' ${RUN_ARGS} '${IMAGE}'"
