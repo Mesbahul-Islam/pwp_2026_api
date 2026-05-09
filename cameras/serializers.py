@@ -4,6 +4,7 @@ Provides serialization for Camera model.
 """
 
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 from .models import Camera
 from eyesedge.schema_validation import validate_payload_with_schema
 
@@ -15,6 +16,8 @@ class CameraSerializer(serializers.ModelSerializer):
     https://github.com/UniOulu-Ubicomp-Programming-Courses/
     pwp-sensorhub-example/blob/ex2-05-validation/app.py
     """
+
+    url = serializers.SerializerMethodField()
 
     @staticmethod
     def _json_schema(partial=False):
@@ -56,6 +59,11 @@ class CameraSerializer(serializers.ModelSerializer):
         validate_payload_with_schema(attrs, self._json_schema(partial=self.partial))
         return super().validate(attrs)
 
+    def get_url(self, obj):
+        request = self.context.get("request") if hasattr(self, "context") else None
+        return reverse("camera-detail", kwargs={"uuid": obj.uuid}, request=request)
+
     class Meta:
         model = Camera
-        fields = ['id', 'address', 'resolution', 'fps', 'status']
+        fields = ['uuid', 'url', 'address', 'resolution', 'fps', 'status']
+        read_only_fields = ['uuid']

@@ -2,6 +2,8 @@
 Models for the cameras app.
 Defines the Camera model for storing security camera configurations.
 """
+import uuid
+
 from django.db import models
 
 
@@ -21,6 +23,7 @@ class Camera(models.Model):
         (RESOLUTION_1080P, "1080p"),
         (RESOLUTION_4K, "4k"),
     ]
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     address = models.URLField(unique=True, null=False, blank=False)
     resolution = models.CharField(
         max_length=15,

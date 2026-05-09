@@ -37,6 +37,8 @@ class CameraDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Camera.objects.all()
     serializer_class = CameraSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "uuid"
+    lookup_url_kwarg = "uuid"
 
 
 class CameraMotionsList(generics.ListCreateAPIView):
@@ -47,17 +49,17 @@ class CameraMotionsList(generics.ListCreateAPIView):
     serializer_class = MotionEventSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["duration", "threshold", "timestamp"]
+    filterset_fields = ["duration", "threshold", "timestamp", "uuid"]
 
     def get_queryset(self):
         """Return motion events filtered by camera ID."""
-        camera_id = self.kwargs['pk']
-        return MotionEvent.objects.filter(camera_id=camera_id)
+        camera_uuid = self.kwargs['uuid']
+        return MotionEvent.objects.filter(camera__uuid=camera_uuid)
 
     def create(self, request, *args, **kwargs):
         """Create a motion event and force camera from URL path."""
         payload = request.data.copy()
-        payload["camera"] = self.kwargs["pk"]
+        payload["camera"] = str(self.kwargs["uuid"])
 
         serializer = self.get_serializer(data=payload)
         serializer.is_valid(raise_exception=True)
@@ -74,9 +76,9 @@ class CameraImagesList(generics.ListAPIView):
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["filepath", "filesize", "motion_event"]
+    filterset_fields = ["filepath", "filesize", "motion_event__uuid", "uuid"]
 
     def get_queryset(self):
         """Return images filtered by camera ID via motion event."""
-        camera_id = self.kwargs['pk']
-        return Image.objects.filter(motion_event__camera_id=camera_id)
+        camera_uuid = self.kwargs['uuid']
+        return Image.objects.filter(motion_event__camera__uuid=camera_uuid)

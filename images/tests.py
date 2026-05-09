@@ -2,6 +2,8 @@
 Tests for image and API endpoints.
 """
 
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -98,16 +100,16 @@ class ImageSerializerTest(TestCase):
         serializer = ImageSerializer(instance=self.image)
         self.assertEqual(
             set(serializer.data.keys()),
-            {'id', 'camera', 'motion_event', 'filepath', 'filesize', 'created_at'}
+            {'uuid', 'url', 'camera', 'motion_event', 'filepath', 'filesize', 'created_at'}
         )
 
     def test_serializer_camera_derived_from_motion(self):
         serializer = ImageSerializer(instance=self.image)
-        self.assertEqual(serializer.data['camera'], self.camera.id)
+        self.assertEqual(serializer.data['camera'], str(self.camera.uuid))
 
     def test_serializer_valid_data(self):
         data = {
-            "motion_event": self.motion_event.id,
+            "motion_event": str(self.motion_event.uuid),
             "filepath": "http://example.com/images/capture_002.jpg",
             "filesize": 204800
         }
@@ -116,7 +118,7 @@ class ImageSerializerTest(TestCase):
 
     def test_serializer_invalid_filepath(self):
         data = {
-            "motion_event": self.motion_event.id,
+            "motion_event": str(self.motion_event.uuid),
             "filepath": "not-a-valid-url"
         }
         serializer = ImageSerializer(data=data)
@@ -148,13 +150,13 @@ class ImageAPITest(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.list_url = reverse('image-list')
-        self.detail_url = reverse('image-detail', kwargs={'pk': self.image.pk})
+        self.detail_url = reverse('image-detail', kwargs={'uuid': self.image.uuid})
 
     def test_get_image_list(self):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), Image.objects.count())
-        self.assertIn(self.image.pk, [item["id"] for item in response.data])
+        self.assertIn(str(self.image.uuid), [item["uuid"] for item in response.data])
 
     def test_get_image_detail(self):
         response = self.client.get(self.detail_url)
@@ -164,22 +166,24 @@ class ImageAPITest(APITestCase):
     def test_get_image_includes_camera(self):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['camera'], self.camera.id)
+        self.assertEqual(response.data['camera'], str(self.camera.uuid))
 
     def test_create_image(self):
         count_before = Image.objects.count()
         data = {
-            "motion_event": self.motion_event.id,
+            "motion_event": str(self.motion_event.uuid),
             "filepath": "http://example.com/images/capture_002.jpg",
             "filesize": 204800
         }
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Image.objects.count(), count_before + 1)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
     def test_update_image(self):
         data = {
-            "motion_event": self.motion_event.id,
+            "motion_event": str(self.motion_event.uuid),
             "filepath": "http://example.com/images/updated.jpg",
             "filesize": 512000
         }
@@ -203,32 +207,32 @@ class ImageAPITest(APITestCase):
         self.assertFalse(Image.objects.filter(pk=self.image.pk).exists())
 
     def test_get_nonexistent_image(self):
-        url = reverse('image-detail', kwargs={'pk': 9999})
+        url = reverse('image-detail', kwargs={'uuid': uuid.uuid4()})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_image_invalid_motion_event(self):
         data = {
-            "motion_event": 9999,
+            "motion_event": str(uuid.uuid4()),
             "filepath": "http://example.com/images/capture.jpg"
         }
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_camera_images_via_nested_route(self):
-        url = reverse('camera-images', kwargs={'pk': self.camera.pk})
+        url = reverse('camera-images', kwargs={'uuid': self.camera.uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_get_motion_images_via_nested_route(self):
-        url = reverse('motion-images', kwargs={'pk': self.motion_event.pk})
+        url = reverse('motion-images', kwargs={'uuid': self.motion_event.uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
     def test_create_image_via_motion_nested_route(self):
-        url = reverse('motion-images', kwargs={'pk': self.motion_event.pk})
+        url = reverse('motion-images', kwargs={'uuid': self.motion_event.uuid})
         count_before = Image.objects.count()
 
         response = self.client.post(
@@ -242,7 +246,9 @@ class ImageAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Image.objects.count(), count_before + 1)
-        self.assertEqual(response.data['motion_event'], self.motion_event.pk)
+        self.assertEqual(response.data['motion_event'], self.motion_event.uuid)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
     def test_create_image_via_motion_nested_route_ignores_payload_motion_event(self):
         motion2 = MotionEvent.objects.create(
@@ -250,12 +256,12 @@ class ImageAPITest(APITestCase):
             duration=3.3,
             threshold=0.4,
         )
-        url = reverse('motion-images', kwargs={'pk': self.motion_event.pk})
+        url = reverse('motion-images', kwargs={'uuid': self.motion_event.uuid})
 
         response = self.client.post(
             url,
             {
-                "motion_event": motion2.pk,
+                "motion_event": str(motion2.uuid),
                 "filepath": "http://example.com/images/capture_nested_override.jpg",
                 "filesize": 3333,
             },
@@ -263,7 +269,9 @@ class ImageAPITest(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['motion_event'], self.motion_event.pk)
+        self.assertEqual(response.data['motion_event'], self.motion_event.uuid)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
 
 class ImageAuthenticationAPITest(APITestCase):
@@ -291,7 +299,7 @@ class ImageAuthenticationAPITest(APITestCase):
             password="test-pass-123"
         )
         self.list_url = reverse("image-list")
-        self.detail_url = reverse("image-detail", kwargs={"pk": self.image.pk})
+        self.detail_url = reverse("image-detail", kwargs={"uuid": self.image.uuid})
 
     def test_anonymous_image_endpoints_are_rejected(self):
         responses = [
@@ -300,14 +308,14 @@ class ImageAuthenticationAPITest(APITestCase):
             self.client.post(
                 self.list_url,
                 {
-                    "motion_event": self.motion_event.id,
+                    "motion_event": str(self.motion_event.uuid),
                     "filepath": "http://example.com/images/auth_post.jpg",
                     "filesize": 2000,
                 },
                 format="json",
             ),
             self.client.post(
-                reverse("motion-images", kwargs={"pk": self.motion_event.pk}),
+                reverse("motion-images", kwargs={"uuid": self.motion_event.uuid}),
                 {
                     "filepath": "http://example.com/images/auth_nested.jpg",
                     "filesize": 2000,

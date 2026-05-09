@@ -2,6 +2,8 @@
 Tests for camera model and related API endpoints.
 """
 
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -80,7 +82,7 @@ class CameraSerializerTest(TestCase):
         serializer = CameraSerializer(instance=self.camera)
         self.assertEqual(
             set(serializer.data.keys()),
-            {'id', 'address', 'resolution', 'fps','status'}
+            {'uuid', 'url', 'address', 'resolution', 'fps','status'}
         )
 
     def test_serializer_valid_data(self):
@@ -119,7 +121,7 @@ class CameraAPITest(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.list_url = reverse('camera-list')
-        self.detail_url = reverse('camera-detail', kwargs={'pk': self.camera.pk})
+        self.detail_url = reverse('camera-detail', kwargs={'uuid': self.camera.uuid})
 
     def test_get_camera_list(self):
         response = self.client.get(self.list_url)
@@ -142,6 +144,8 @@ class CameraAPITest(APITestCase):
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Camera.objects.count(), total_cameras + 1)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
     def test_update_camera(self):
         data = {
@@ -169,7 +173,7 @@ class CameraAPITest(APITestCase):
         self.assertEqual(Camera.objects.count(), total_cameras - 1)
 
     def test_get_nonexistent_camera(self):
-        url = reverse('camera-detail', kwargs={'pk': 9999})
+        url = reverse('camera-detail', kwargs={'uuid': uuid.uuid4()})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -182,19 +186,19 @@ class CameraAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_camera_motions_empty(self):
-        url = reverse('camera-motions', kwargs={'pk': self.camera.pk})
+        url = reverse('camera-motions', kwargs={'uuid': self.camera.uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
     def test_get_camera_images_empty(self):
-        url = reverse('camera-images', kwargs={'pk': self.camera.pk})
+        url = reverse('camera-images', kwargs={'uuid': self.camera.uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
 
     def test_create_motion_event_for_camera(self):
-        url = reverse('camera-motions', kwargs={'pk': self.camera.pk})
+        url = reverse('camera-motions', kwargs={'uuid': self.camera.uuid})
         count_before = MotionEvent.objects.count()
 
         response = self.client.post(
@@ -208,7 +212,9 @@ class CameraAPITest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MotionEvent.objects.count(), count_before + 1)
-        self.assertEqual(response.data['camera'], self.camera.pk)
+        self.assertEqual(response.data['camera'], self.camera.uuid)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
     def test_create_motion_event_for_camera_ignores_payload_camera(self):
         camera2 = Camera.objects.create(
@@ -217,12 +223,12 @@ class CameraAPITest(APITestCase):
             fps=25,
             status="active",
         )
-        url = reverse('camera-motions', kwargs={'pk': self.camera.pk})
+        url = reverse('camera-motions', kwargs={'uuid': self.camera.uuid})
 
         response = self.client.post(
             url,
             {
-                "camera": camera2.pk,
+                "camera": str(camera2.uuid),
                 "duration": 1.1,
                 "threshold": 0.2,
             },
@@ -230,7 +236,9 @@ class CameraAPITest(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['camera'], self.camera.pk)
+        self.assertEqual(response.data['camera'], self.camera.uuid)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
 
 class CameraAuthenticationAPITest(APITestCase):
@@ -247,9 +255,9 @@ class CameraAuthenticationAPITest(APITestCase):
             password="test-pass-123"
         )
         self.list_url = reverse("camera-list")
-        self.detail_url = reverse("camera-detail", kwargs={"pk": self.camera.pk})
-        self.motions_url = reverse("camera-motions", kwargs={"pk": self.camera.pk})
-        self.images_url = reverse("camera-images", kwargs={"pk": self.camera.pk})
+        self.detail_url = reverse("camera-detail", kwargs={"uuid": self.camera.uuid})
+        self.motions_url = reverse("camera-motions", kwargs={"uuid": self.camera.uuid})
+        self.images_url = reverse("camera-images", kwargs={"uuid": self.camera.uuid})
 
     def test_anonymous_camera_endpoints_are_rejected(self):
         responses = [

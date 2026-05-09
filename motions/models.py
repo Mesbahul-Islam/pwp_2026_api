@@ -2,6 +2,8 @@
 Models for the motions app.
 Defines the MotionEvent model for recording motion detection events.
 """
+import uuid
+
 from django.db import models
 
 
@@ -12,6 +14,7 @@ class MotionEvent(models.Model):
     Stores the camera reference, timestamp, duration of motion,
     and the sensitivity threshold that triggered the detection.
     """
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     camera = models.ForeignKey(
         'cameras.Camera',
         on_delete=models.CASCADE,
