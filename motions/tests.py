@@ -1,3 +1,5 @@
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -68,12 +70,12 @@ class MotionEventSerializerTest(TestCase):
         serializer = MotionEventSerializer(instance=self.motion_event)
         self.assertEqual(
             set(serializer.data.keys()),
-            {'id', 'camera', 'timestamp', 'duration', 'threshold', 'created_at'}
+            {'uuid', 'url', 'camera', 'timestamp', 'duration', 'threshold', 'created_at'}
         )
 
     def test_serializer_valid_data(self):
         data = {
-            "camera": self.camera.id,
+            "camera": str(self.camera.uuid),
             "duration": 10.0,
             "threshold": 0.5
         }
@@ -106,33 +108,35 @@ class MotionEventAPITest(APITestCase):
         )
         self.client.force_authenticate(user=self.user)
         self.list_url = reverse('motion-list')
-        self.detail_url = reverse('motion-detail', kwargs={'pk': self.motion_event.pk})
+        self.detail_url = reverse('motion-detail', kwargs={'uuid': self.motion_event.uuid})
 
     def test_get_motion_list(self):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), MotionEvent.objects.count())
-        self.assertIn(self.motion_event.pk, [item["id"] for item in response.data])
+        self.assertIn(str(self.motion_event.uuid), [item["uuid"] for item in response.data])
 
     def test_get_motion_detail(self):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['camera'], self.camera.id)
+        self.assertEqual(response.data['camera'], self.camera.uuid)
 
     def test_create_motion_event(self):
         count_before = MotionEvent.objects.count()
         data = {
-            "camera": self.camera.id,
+            "camera": str(self.camera.uuid),
             "duration": 10.0,
             "threshold": 0.5
         }
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MotionEvent.objects.count(), count_before + 1)
+        self.assertIn('Location', response)
+        self.assertEqual(response['Location'], response.data['url'])
 
     def test_update_motion_event(self):
         data = {
-            "camera": self.camera.id,
+            "camera": str(self.camera.uuid),
             "duration": 15.0,
             "threshold": 0.6
         }
@@ -156,20 +160,20 @@ class MotionEventAPITest(APITestCase):
         self.assertFalse(MotionEvent.objects.filter(pk=self.motion_event.pk).exists())
 
     def test_get_nonexistent_motion_event(self):
-        url = reverse('motion-detail', kwargs={'pk': 9999})
+        url = reverse('motion-detail', kwargs={'uuid': uuid.uuid4()})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_motion_event_invalid_camera(self):
         data = {
-            "camera": 9999,
+            "camera": str(uuid.uuid4()),
             "duration": 10.0
         }
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_get_motion_images_empty(self):
-        url = reverse('motion-images', kwargs={'pk': self.motion_event.pk})
+        url = reverse('motion-images', kwargs={'uuid': self.motion_event.uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
@@ -194,8 +198,8 @@ class MotionEventAuthenticationAPITest(APITestCase):
             password="test-pass-123"
         )
         self.list_url = reverse("motion-list")
-        self.detail_url = reverse("motion-detail", kwargs={"pk": self.motion_event.pk})
-        self.images_url = reverse("motion-images", kwargs={"pk": self.motion_event.pk})
+        self.detail_url = reverse("motion-detail", kwargs={"uuid": self.motion_event.uuid})
+        self.images_url = reverse("motion-images", kwargs={"uuid": self.motion_event.uuid})
 
     def test_anonymous_motion_endpoints_are_rejected(self):
         responses = [
@@ -205,7 +209,7 @@ class MotionEventAuthenticationAPITest(APITestCase):
             self.client.post(
                 self.list_url,
                 {
-                    "camera": self.camera.id,
+                    "camera": str(self.camera.uuid),
                     "duration": 1.1,
                     "threshold": 0.3,
                 },

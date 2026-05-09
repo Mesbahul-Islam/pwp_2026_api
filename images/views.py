@@ -21,7 +21,7 @@ class ImageList(generics.ListCreateAPIView):
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["motion_event"]
+    filterset_fields = ["uuid", "motion_event__uuid"]
 
 
 class ImageDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -33,3 +33,5 @@ class ImageDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Image.objects.all()
     serializer_class = ImageSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "uuid"
+    lookup_url_kwarg = "uuid"

@@ -2,6 +2,8 @@
 Models for the images app.
 Defines the Image model for storing captured photographs.
 """
+import uuid
+
 from django.db import models
 
 
@@ -12,6 +14,7 @@ class Image(models.Model):
     Images are linked to motion events. The camera is accessed
     through the motion event relationship to avoid redundancy.
     """
+    uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     motion_event = models.ForeignKey(
         "motions.MotionEvent",
         on_delete=models.CASCADE,
