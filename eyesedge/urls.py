@@ -17,9 +17,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework.authtoken.views import obtain_auth_token
-from .docs_views import openapi_yaml, swagger_ui
+from .docs_views import client, openapi_yaml, swagger_ui
 
 urlpatterns = [
+    path('', client, name='client'),
     path('admin/', admin.site.urls),
     path('api/token/', obtain_auth_token, name='api-token-auth'),
     path('api/schema/', openapi_yaml, name='openapi-yaml'),

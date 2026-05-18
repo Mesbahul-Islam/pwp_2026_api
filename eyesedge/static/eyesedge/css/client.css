@@ -1,0 +1,13 @@
+/* Image capture gallery */
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* Sidebar nav active state — overrides DaisyUI menu in night theme */
+[data-theme="night"] .menu li > a.nav-item.active {
+  background-color: #38bdf8;
+  color: #0f172a;
+}

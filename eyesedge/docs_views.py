@@ -21,3 +21,8 @@ def openapi_yaml(request):
 def swagger_ui(request):
     """Render Swagger UI bound to the served YAML schema endpoint."""
     return render(request, "eyesedge/swagger_ui.html")
+
+
+def client(request):
+    """Render the single-page management console at the API root."""
+    return render(request, "eyesedge/client.html")

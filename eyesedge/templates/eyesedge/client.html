@@ -1,0 +1,218 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EyesEdge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"/>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet" type="text/css"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="{% static 'eyesedge/css/client.css' %}"/>
+</head>
+<body class="font-['Inter',system-ui,sans-serif]">
+
+<!-- ── Login Screen ── -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-sky-900">
+  <div class="card bg-base-100 shadow-2xl w-96">
+    <div class="card-body gap-4">
+
+      <div class="flex items-center gap-3">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+          <rect width="36" height="36" rx="8" fill="#0f172a"/>
+          <circle cx="18" cy="18" r="7" stroke="#38bdf8" stroke-width="2"/>
+          <circle cx="18" cy="18" r="3" fill="#38bdf8"/>
+          <rect x="8" y="7" width="20" height="2" rx="1" fill="#38bdf8" opacity=".4"/>
+        </svg>
+        <div>
+          <h1 class="text-xl font-bold text-base-content">EyesEdge</h1>
+          <p class="text-xs text-base-content/50">Security Camera Platform</p>
+        </div>
+      </div>
+
+      <div id="login-error" class="alert alert-error text-sm" style="display:none"></div>
+
+      <form id="login-form" class="flex flex-col gap-3">
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Username</span></label>
+          <input type="text" id="username" class="input input-bordered input-sm" autocomplete="username" required/>
+        </div>
+        <div class="form-control">
+          <label class="label pb-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Password</span></label>
+          <input type="password" id="password" class="input input-bordered input-sm" autocomplete="current-password" required/>
+        </div>
+        <button type="submit" id="login-btn" class="btn btn-neutral w-full mt-1">Sign in</button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── App (drawer layout) ── -->
+<div id="app" class="drawer lg:drawer-open hidden">
+  <input id="sidebar-toggle" type="checkbox" class="drawer-toggle"/>
+
+  <!-- Page content -->
+  <div class="drawer-content flex flex-col min-h-screen bg-base-200/40">
+
+    <!-- Mobile top bar -->
+    <div class="navbar bg-base-100 shadow-sm lg:hidden">
+      <label for="sidebar-toggle" class="btn btn-ghost btn-square" aria-label="Open sidebar">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </label>
+      <span class="text-base font-bold ml-1">EyesEdge</span>
+    </div>
+
+    <main id="content" class="flex-1 p-6 lg:p-8">
+      <div class="flex items-center justify-center h-48">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- Sidebar drawer -->
+  <div class="drawer-side z-40">
+    <label for="sidebar-toggle" aria-label="Close sidebar" class="drawer-overlay"></label>
+    <aside data-theme="night" class="min-h-screen w-56 flex flex-col bg-base-100">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-2 px-5 py-5 border-b border-base-300">
+        <svg width="28" height="28" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+          <rect width="36" height="36" rx="8" fill="#1e293b"/>
+          <circle cx="18" cy="18" r="7" stroke="#38bdf8" stroke-width="2"/>
+          <circle cx="18" cy="18" r="3" fill="#38bdf8"/>
+        </svg>
+        <div>
+          <div class="text-base-content font-bold text-sm leading-tight">EyesEdge</div>
+          <div class="text-base-content/50 text-xs">Management Console</div>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 px-3 py-3">
+        <ul class="menu p-0 text-sm gap-0.5">
+          <li class="menu-title text-xs">Overview</li>
+          <li>
+            <a class="nav-item" data-view="dashboard" onclick="navigate('dashboard')">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1"/>
+                <rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+              Dashboard
+            </a>
+          </li>
+
+          <li class="menu-title text-xs mt-1">Data</li>
+          <li>
+            <a class="nav-item" data-view="cameras" onclick="navigate('cameras')">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M23 7l-7 5 7 5V7z"/>
+                <rect x="1" y="5" width="15" height="14" rx="2"/>
+              </svg>
+              Cameras
+            </a>
+          </li>
+          <li>
+            <a class="nav-item" data-view="motions" onclick="navigate('motions')">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 8v4l3 3"/>
+              </svg>
+              Motion Events
+            </a>
+          </li>
+          <li>
+            <a class="nav-item" data-view="images" onclick="navigate('images')">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+              Images
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- User footer -->
+      <div class="px-3 py-3 border-t border-base-300">
+        <div class="flex items-center gap-2 px-2 py-2 mb-1">
+          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+               class="text-base-content/40 shrink-0" aria-hidden="true">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          <div class="min-w-0">
+            <div id="sidebar-username" class="text-base-content font-semibold text-sm truncate">—</div>
+            <div class="text-base-content/50 text-xs">Logged in</div>
+          </div>
+        </div>
+        <button onclick="logout()" class="btn btn-ghost btn-sm w-full">Sign out</button>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<!-- ── Camera Modal ── -->
+<dialog id="camera-modal" class="modal">
+  <div class="modal-box w-full max-w-md">
+    <h3 id="camera-modal-title" class="font-bold text-lg mb-4">Add Camera</h3>
+    <div id="camera-modal-error" class="alert alert-error text-sm mb-4" style="display:none"></div>
+
+    <div class="flex flex-col gap-3">
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Address (URL)</span></label>
+        <input type="url" id="cam-address" class="input input-bordered input-sm" placeholder="rtsp://192.168.1.10"/>
+      </div>
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Resolution</span></label>
+        <select id="cam-resolution" class="select select-bordered select-sm">
+          <option value="1280x720">720p (1280×720)</option>
+          <option value="1920x1080">1080p (1920×1080)</option>
+          <option value="3840x2160">4K (3840×2160)</option>
+        </select>
+      </div>
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">FPS</span></label>
+        <input type="number" id="cam-fps" class="input input-bordered input-sm" value="25" min="1" max="120"/>
+      </div>
+      <div class="form-control">
+        <label class="label pb-1"><span class="label-text text-xs font-semibold uppercase tracking-wide">Status</span></label>
+        <select id="cam-status" class="select select-bordered select-sm">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+          <option value="offline">Offline</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-action mt-6">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('camera-modal')">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="camera-modal-save" onclick="saveCamera()">Save</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- ── Confirm Delete Modal ── -->
+<dialog id="confirm-modal" class="modal">
+  <div class="modal-box w-full max-w-sm">
+    <h3 class="font-bold text-lg">Confirm Delete</h3>
+    <p id="confirm-text" class="py-4 text-sm text-base-content/70"></p>
+    <div class="modal-action">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-error btn-sm" id="confirm-ok">Delete</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<script src="{% static 'eyesedge/js/client.js' %}"></script>
+</body>
+</html>
