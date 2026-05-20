@@ -93,9 +93,9 @@ async function saveCamera() {
     status:     document.getElementById('cam-status').value,
   };
 
-  const res = _editingCameraUuid
-    ? await api.patch(`/api/cameras/${_editingCameraUuid}/`, payload)
-    : await api.post('/api/cameras/', payload);
+  const res = _editingCameraUuid ?
+    await api.patch(`/api/cameras/${_editingCameraUuid}/`, payload) :
+    await api.post('/api/cameras/', payload);
 
   btn.disabled = false;
   btn.textContent = 'Save';

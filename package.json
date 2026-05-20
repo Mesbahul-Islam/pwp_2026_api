@@ -1,0 +1,11 @@
+{
+  "name": "eyesedge-client",
+  "private": true,
+  "description": "EyesEdge web client and linting",
+  "devDependencies": {
+    "jshint": "^2.13.6"
+  },
+  "scripts": {
+    "lint:client": "jshint eyesedge/static/eyesedge/js/*.js"
+  }
+}

@@ -5,6 +5,7 @@ __pycache__/
 .pylintrc
 **.DS_Store
 db.sqlite3
-db.sqlite3
 *.Pipfile
 *.Pipfile.lock
+node_modules/
+package-lock.json

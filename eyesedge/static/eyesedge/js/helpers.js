@@ -25,9 +25,9 @@ function fmtDate(s) {
 
 function errMsg(data, status) {
   const label = status ? `HTTP ${status}` : 'Network error';
-  const detail = typeof data === 'object'
-    ? (data.detail || Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('; '))
-    : String(data);
+  const detail = typeof data === 'object' ?
+    (data.detail || Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('; ')) :
+    String(data);
   return `<strong>${label}</strong> — ${detail}`;
 }
 

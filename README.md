@@ -277,6 +277,28 @@ For pylint configuration, see the `.pylintrc` file in the project root.
 
 #### Current Pylint Score - 9.84/10
 
+### Client Linting (JSHint)
+
+Requirements: Node.js 18+ and npm
+
+From the `api/` directory:
+
+```bash
+npm install
+npm run lint:client
+```
+
+**JSHint Configuration:**
+- `esversion: 11` (ECMAScript 2020 support)
+- `undef: true` (detect undefined variables)
+- `eqeqeq: true` (require === and !==)
+- Strict mode disabled (scripts are loaded in HTML)
+- Browser globals enabled
+
+The client code passes JSHint linting with no errors.
+
+*Linting setup configured with AI assistance.*
+
 ---
 
 ## Database Description

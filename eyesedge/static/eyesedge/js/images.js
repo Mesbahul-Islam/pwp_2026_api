@@ -29,9 +29,9 @@ async function viewMotionImages(uuid, label) {
   const res = await api.get(`/api/motions/${uuid}/images/`);
   const images = results(res.data);
 
-  const gallery = images.length
-    ? _imageGrid(images)
-    : '<p class="text-base-content/40 text-sm mt-2">No images for this event.</p>';
+  const gallery = images.length ?
+    _imageGrid(images) :
+    '<p class="text-base-content/40 text-sm mt-2">No images for this event.</p>';
 
   setContent(`
     <button class="btn btn-ghost btn-sm mb-4" onclick="navigate('${prevView}')">← Back</button>
@@ -63,8 +63,8 @@ async function renderImages() {
       <p class="text-base-content/60 text-sm mt-1">${images.length} captured image${images.length !== 1 ? 's' : ''}</p>
     </div>
     ${!res.ok ? `<div class="alert alert-error mb-4 text-sm">${errMsg(res.data, res.status)}</div>` : ''}
-    ${images.length
-      ? _imageGrid(images)
-      : '<p class="text-base-content/40 text-sm">No images captured yet.</p>'}
+    ${images.length ?
+      _imageGrid(images) :
+      '<p class="text-base-content/40 text-sm">No images captured yet.</p>'}
   `);
 }

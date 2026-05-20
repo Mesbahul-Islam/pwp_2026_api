@@ -5,7 +5,7 @@ const api = {
 
   _headers() {
     const h = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-    if (this.token) h['Authorization'] = `Token ${this.token}`;
+    if (this.token) h.Authorization = `Token ${this.token}`;
     return h;
   },
 
