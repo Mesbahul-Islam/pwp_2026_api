@@ -25,14 +25,14 @@ components:
       description: Token auth using header value format `Token <token>`.
 
   parameters:
-    IdPath:
-      name: id
+    UuidPath:
+      name: uuid
       in: path
       required: true
-      description: Resource identifier.
+      description: Resource UUID.
       schema:
-        type: integer
-        minimum: 1
+        type: string
+        format: uuid
     CameraAddressFilter:
       name: address
       in: query
@@ -61,6 +61,20 @@ components:
       schema:
         type: string
         enum: [active, inactive]
+    MotionUuidFilter:
+      name: uuid
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+    MotionCameraUuidFilter:
+      name: camera__uuid
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
     MotionDurationFilter:
       name: duration
       in: query
@@ -83,13 +97,27 @@ components:
       schema:
         type: string
         format: date-time
-    ImageMotionEventFilter:
-      name: motion_event
+    MotionCreatedAtFilter:
+      name: created_at
       in: query
       required: false
       schema:
-        type: integer
-        minimum: 1
+        type: string
+        format: date-time
+    ImageUuidFilter:
+      name: uuid
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
+    ImageMotionEventUuidFilter:
+      name: motion_event__uuid
+      in: query
+      required: false
+      schema:
+        type: string
+        format: uuid
     ImageFilepathFilter:
       name: filepath
       in: query
@@ -104,6 +132,13 @@ components:
       schema:
         type: integer
         minimum: 0
+    ImageCreatedAtFilter:
+      name: created_at
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
 
   schemas:
     AuthTokenRequest:
@@ -151,8 +186,13 @@ components:
       required: [address, resolution]
       additionalProperties: false
       properties:
-        id:
-          type: integer
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        url:
+          type: string
+          format: uri
           readOnly: true
         address:
           type: string
@@ -167,7 +207,8 @@ components:
           type: string
           enum: [active, inactive]
       example:
-        id: 1
+        uuid: 6b1d6586-1f0f-4bb4-9d43-2d2c913e37b8
+        url: /api/cameras/6b1d6586-1f0f-4bb4-9d43-2d2c913e37b8/
         address: http://192.168.1.100/stream
         resolution: "1920x1080"
         fps: 25
@@ -178,12 +219,17 @@ components:
       required: [camera, duration]
       additionalProperties: false
       properties:
-        id:
-          type: integer
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        url:
+          type: string
+          format: uri
           readOnly: true
         camera:
-          type: integer
-          minimum: 1
+          type: string
+          format: uuid
         timestamp:
           type: string
           format: date-time
@@ -200,8 +246,9 @@ components:
           format: date-time
           readOnly: true
       example:
-        id: 10
-        camera: 1
+        uuid: 1c4a245c-4639-4a35-8763-5a81e6454a1c
+        url: /api/motions/1c4a245c-4639-4a35-8763-5a81e6454a1c/
+        camera: 6b1d6586-1f0f-4bb4-9d43-2d2c913e37b8
         timestamp: "2026-04-12T10:30:00Z"
         duration: 5.5
         threshold: 0.25
@@ -212,16 +259,22 @@ components:
       required: [motion_event, filepath]
       additionalProperties: false
       properties:
-        id:
-          type: integer
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        url:
+          type: string
+          format: uri
           readOnly: true
         camera:
-          type: integer
+          type: string
+          format: uuid
           readOnly: true
           description: Derived from the related motion event.
         motion_event:
-          type: integer
-          minimum: 1
+          type: string
+          format: uuid
         filepath:
           type: string
           format: uri
@@ -234,9 +287,10 @@ components:
           format: date-time
           readOnly: true
       example:
-        id: 105
-        camera: 1
-        motion_event: 10
+        uuid: 6d5d1e71-cb53-4ac2-8239-2ce91dc4d5c7
+        url: /api/images/6d5d1e71-cb53-4ac2-8239-2ce91dc4d5c7/
+        camera: 6b1d6586-1f0f-4bb4-9d43-2d2c913e37b8
+        motion_event: 1c4a245c-4639-4a35-8763-5a81e6454a1c
         filepath: http://storage.local/snapshots/105.jpg
         filesize: 102400
         created_at: "2026-04-12T10:30:02Z"
@@ -324,9 +378,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetailError'
 
-  /cameras/{id}/:
+  /cameras/{uuid}/:
     parameters:
-      - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/UuidPath'
     get:
       tags: [cameras]
       summary: Retrieve camera
@@ -383,6 +437,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetailError'
+    patch:
+      tags: [cameras]
+      summary: Partially update camera
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Camera'
+      responses:
+        '200':
+          description: Camera updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
+        '404':
+          description: Camera not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
     delete:
       tags: [cameras]
       summary: Delete camera
@@ -402,13 +490,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetailError'
 
-  /cameras/{id}/motions/:
+  /cameras/{uuid}/motions/:
     parameters:
-      - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/UuidPath'
     get:
       tags: [cameras, motions]
       summary: List motions by camera
       parameters:
+        - $ref: '#/components/parameters/MotionUuidFilter'
         - $ref: '#/components/parameters/MotionDurationFilter'
         - $ref: '#/components/parameters/MotionThresholdFilter'
         - $ref: '#/components/parameters/MotionTimestampFilter'
@@ -430,7 +519,7 @@ paths:
     post:
       tags: [cameras, motions]
       summary: Create motion event for camera
-      description: The camera is forced from path parameter `{id}`.
+      description: The camera is forced from path parameter `{uuid}`.
       requestBody:
         required: true
         content:
@@ -474,32 +563,44 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetailError'
 
+  /cameras/{uuid}/images/:
+    parameters:
+      - $ref: '#/components/parameters/UuidPath'
+    get:
+      tags: [cameras, images]
+      summary: List images by camera
+      parameters:
+        - $ref: '#/components/parameters/ImageUuidFilter'
+        - $ref: '#/components/parameters/ImageFilepathFilter'
+        - $ref: '#/components/parameters/ImageFilesizeFilter'
+        - $ref: '#/components/parameters/ImageMotionEventUuidFilter'
+      responses:
+        '200':
+          description: Images for selected camera.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Image'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
+
   /motions/:
     get:
       tags: [motions]
       summary: List motion events
       parameters:
-        - name: id
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-        - name: camera
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
+        - $ref: '#/components/parameters/MotionUuidFilter'
+        - $ref: '#/components/parameters/MotionCameraUuidFilter'
         - $ref: '#/components/parameters/MotionDurationFilter'
         - $ref: '#/components/parameters/MotionThresholdFilter'
         - $ref: '#/components/parameters/MotionTimestampFilter'
-        - name: created_at
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
+        - $ref: '#/components/parameters/MotionCreatedAtFilter'
       responses:
         '200':
           description: List of motion events.
@@ -549,9 +650,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetailError'
 
-  /motions/{id}/:
+  /motions/{uuid}/:
     parameters:
-      - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/UuidPath'
     get:
       tags: [motions]
       summary: Retrieve motion event
@@ -608,6 +709,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DetailError'
+    patch:
+      tags: [motions]
+      summary: Partially update motion event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotionEvent'
+      responses:
+        '200':
+          description: Motion event updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MotionEvent'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
+        '404':
+          description: Motion event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
     delete:
       tags: [motions]
       summary: Delete motion event
@@ -627,28 +762,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetailError'
 
-  /motions/{id}/images/:
+  /motions/{uuid}/images/:
     parameters:
-      - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/UuidPath'
     get:
       tags: [motions, images]
       summary: List images by motion event
       parameters:
-        - name: id
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
+        - $ref: '#/components/parameters/ImageUuidFilter'
         - $ref: '#/components/parameters/ImageFilepathFilter'
         - $ref: '#/components/parameters/ImageFilesizeFilter'
-        - name: created_at
-          in: query
-          required: false
-          schema:
-            type: string
-            format: date-time
-        - $ref: '#/components/parameters/ImageMotionEventFilter'
+        - $ref: '#/components/parameters/ImageCreatedAtFilter'
+        - $ref: '#/components/parameters/ImageMotionEventUuidFilter'
       responses:
         '200':
           description: Images for selected motion event.
@@ -667,7 +792,7 @@ paths:
     post:
       tags: [motions, images]
       summary: Create image under motion event
-      description: The `motion_event` value is forced from path parameter `{id}`.
+      description: The `motion_event` value is forced from path parameter `{uuid}`.
       requestBody:
         required: true
         content:
@@ -717,7 +842,8 @@ paths:
       summary: List images
       description: Cached for 300 seconds and varied by Authorization header.
       parameters:
-        - $ref: '#/components/parameters/ImageMotionEventFilter'
+        - $ref: '#/components/parameters/ImageUuidFilter'
+        - $ref: '#/components/parameters/ImageMotionEventUuidFilter'
       responses:
         '200':
           description: List of image resources.
@@ -767,9 +893,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/DetailError'
 
-  /images/{id}/:
+  /images/{uuid}/:
     parameters:
-      - $ref: '#/components/parameters/IdPath'
+      - $ref: '#/components/parameters/UuidPath'
     get:
       tags: [images]
       summary: Retrieve image
@@ -795,6 +921,40 @@ paths:
     put:
       tags: [images]
       summary: Update image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Image'
+      responses:
+        '200':
+          description: Image updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Image'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
+        '404':
+          description: Image not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailError'
+    patch:
+      tags: [images]
+      summary: Partially update image
       requestBody:
         required: true
         content:
