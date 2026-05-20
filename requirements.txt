@@ -9,3 +9,4 @@ django-extensions
 jsonschema
 coverage
 python-dotenv
+whitenoise
