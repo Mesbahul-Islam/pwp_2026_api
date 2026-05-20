@@ -44,6 +44,7 @@
         </div>
         <button type="submit" id="login-btn" class="btn btn-neutral w-full mt-1">Sign in</button>
       </form>
+      <button onclick="promptApiKey()" id="api-key-link" class="btn w-full">Use API Key</button>
 
     </div>
   </div>
@@ -213,6 +214,14 @@
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
 
-<script src="{% static 'eyesedge/js/client.js' %}"></script>
+<script src="{% static 'eyesedge/js/api_client.js' %}"></script>
+<script src="{% static 'eyesedge/js/helpers.js' %}"></script>
+<script src="{% static 'eyesedge/js/navigation.js' %}"></script>
+<script src="{% static 'eyesedge/js/dashboard.js' %}"></script>
+<script src="{% static 'eyesedge/js/cameras.js' %}"></script>
+<script src="{% static 'eyesedge/js/motions.js' %}"></script>
+<script src="{% static 'eyesedge/js/images.js' %}"></script>
+<script src="{% static 'eyesedge/js/auth.js' %}"></script>
+<script src="{% static 'eyesedge/js/main.js' %}"></script>
 </body>
 </html>
